@@ -27,6 +27,8 @@ public static class VenatorSetup
     const string ArmsFbx = ArtDir + "/Venator_Arms.fbx";
     const string GrimFbx = ArtDir + "/Grim.fbx";
     const string ScenePath = SceneDir + "/District01_Greybox.unity";
+    // Blender models (built facing Blender -Y) import into Unity facing -Z, so turn them around.
+    static readonly Quaternion ModelFix = Quaternion.Euler(0f, 180f, 0f);
 
     // ------------------------------------------------------------------ menu items
     [MenuItem("Venator/Build Week 02 Test Scene", priority = 1)]
@@ -265,6 +267,7 @@ public static class VenatorSetup
         var muzzle = new GameObject("Muzzle").transform;
         muzzle.SetParent(camGo.transform, false);
         muzzle.localPosition = new Vector3(0.15f, -0.17f, 0.78f);
+        if (arms != null) FitViewmodel(arms, camGo.transform, muzzle);
 
         var mover = root.AddComponent<FirstPersonController>();
         mover.cameraPivot = camGo.transform;
@@ -281,6 +284,63 @@ public static class VenatorSetup
         return SavePrefab<Transform>(root, "Player").gameObject;
     }
 
+    /// <summary>
+    /// Puts the viewmodel arms in front of the camera no matter how the FBX import turned out.
+    /// Measures where three bones landed, tries all 24 axis-aligned rotations and three unit scales,
+    /// and keeps the one that puts the hands and crossbow closest to where they belong on screen.
+    /// </summary>
+    static void FitViewmodel(GameObject arms, Transform cam, Transform muzzle)
+    {
+        foreach (var smr in arms.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            smr.updateWhenOffscreen = true; // never cull the arms because of stale bounds
+
+        var all = arms.GetComponentsInChildren<Transform>(true);
+        string[] names = { "Hand.R", "Hand.L", "Crossbow", "Root" };
+        Vector3[] targets =
+        {
+            new Vector3(0.15f, -0.22f, 0.42f), new Vector3(-0.06f, -0.20f, 0.56f),
+            new Vector3(0.15f, -0.18f, 0.42f), new Vector3(0f, -0.5f, 0f)
+        };
+        var bones = names.Select(n => all.FirstOrDefault(t => t.name == n)).ToArray();
+        if (bones.Any(b => b == null))
+        {
+            arms.transform.localRotation = ModelFix;
+            Debug.LogWarning("VENATOR: arm bones not found, so the arms were just turned 180 degrees. Child names: " +
+                string.Join(", ", all.Take(15).Select(t => t.name)));
+            return;
+        }
+
+        arms.transform.localPosition = Vector3.zero;
+        arms.transform.localRotation = Quaternion.identity;
+        arms.transform.localScale = Vector3.one;
+        Vector3[] pts = bones.Select(b => cam.InverseTransformPoint(b.position)).ToArray();
+
+        var rotations = new List<Quaternion>();
+        for (int x = 0; x < 4; x++)
+            for (int y = 0; y < 4; y++)
+                for (int z = 0; z < 4; z++)
+                {
+                    var q = Quaternion.Euler(x * 90f, y * 90f, z * 90f);
+                    if (!rotations.Any(r => Quaternion.Angle(r, q) < 1f)) rotations.Add(q);
+                }
+
+        float bestErr = float.MaxValue, bestScale = 1f;
+        Quaternion bestRot = Quaternion.identity;
+        foreach (float sc in new[] { 1f, 0.01f, 100f })
+            foreach (var q in rotations)
+            {
+                float err = 0f;
+                for (int i = 0; i < pts.Length; i++) err += (q * (pts[i] * sc) - targets[i]).sqrMagnitude;
+                if (err < bestErr) { bestErr = err; bestRot = q; bestScale = sc; }
+            }
+
+        arms.transform.localRotation = bestRot;
+        arms.transform.localScale = Vector3.one * bestScale;
+        muzzle.localPosition = bestRot * (pts[2] * bestScale) + new Vector3(0f, 0.03f, 0.33f);
+        Debug.Log($"VENATOR: viewmodel fitted - rotation {bestRot.eulerAngles}, scale {bestScale}, error {Mathf.Sqrt(bestErr):0.000} m");
+        if (bestErr > 0.05f) Debug.LogWarning("VENATOR: viewmodel fit is rough - check Player/Main Camera/Viewmodel Arms in the prefab.");
+    }
+
     static GameObject BuildGrimPrefab(RuntimeAnimatorController grimCtrl)
     {
         var root = new GameObject("Grim");
@@ -295,6 +355,7 @@ public static class VenatorSetup
         if (model != null)
         {
             model.name = "Grim Model";
+            model.transform.localRotation = ModelFix; // face the same way the NavMeshAgent moves
             var anim = model.GetComponent<Animator>();
             if (anim == null) anim = model.AddComponent<Animator>();
             anim.runtimeAnimatorController = grimCtrl;

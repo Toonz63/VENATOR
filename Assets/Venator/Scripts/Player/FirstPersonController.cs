@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// First-person movement on a CharacterController: walk, sprint, jump, and slide.
-/// Slide: hold Shift to sprint forward, then press Ctrl. The capsule shrinks so the Venator
+/// Slide: sprint forward with Shift, then tap Ctrl (while sprinting or up to 0.4 s after letting go of Shift). The capsule shrinks so the Venator
 /// can slide under low gaps, and stays crouched until there is room to stand back up.
 /// </summary>
 [RequireComponent(typeof(CharacterController), typeof(VenatorInput))]
@@ -21,6 +21,8 @@ public class FirstPersonController : MonoBehaviour
     public float slideDuration = 0.7f;
     public float slideCooldown = 0.4f;
     public float crouchHeight = 1.0f;
+    [Tooltip("You can still start a slide this long after letting go of Shift.")]
+    public float slideSprintGrace = 0.4f;
 
     [Header("Camera")]
     public Transform cameraPivot;
@@ -36,6 +38,7 @@ public class FirstPersonController : MonoBehaviour
     Vector3 planarVelocity;
     Vector3 slideDirection;
     float slideTimer, nextSlideTime;
+    float lastSprintTime = -10f;
     readonly Collider[] overlap = new Collider[16];
 
     public bool IsGrounded { get; private set; }
@@ -64,8 +67,10 @@ public class FirstPersonController : MonoBehaviour
         if (wish.sqrMagnitude > 1f) wish.Normalize();
         IsSprinting = !dead && input.SprintHeld && m.y > 0.1f && !IsCrouched;
 
-        // ---- start a slide
-        if (!dead && !IsSliding && IsGrounded && IsSprinting && input.SlidePressed && Time.time >= nextSlideTime)
+        // ---- start a slide: while sprinting, or shortly after letting go of Shift (sprint, release, tap Ctrl)
+        if (IsSprinting && IsGrounded) lastSprintTime = Time.time;
+        bool recentlySprinting = IsSprinting || Time.time - lastSprintTime <= slideSprintGrace;
+        if (!dead && !IsSliding && IsGrounded && recentlySprinting && m.y > 0.1f && input.SlidePressed && Time.time >= nextSlideTime)
         {
             IsSliding = true;
             slideTimer = slideDuration;

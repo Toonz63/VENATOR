@@ -14,7 +14,7 @@ How to run (Blender 4.2+ or 5.x):
   3. Press Run Script (Alt+P). The .fbx and .blend files appear in OUT_DIR.
 Or from a terminal:  blender --background --python venator_art.py
 
-Axis notes: everything faces Blender -Y, so after export it faces Unity +Z.
+Axis notes: everything faces Blender -Y. It imports into Unity facing -Z, so VenatorSetup turns the models 180 degrees.
 The arms are modeled around a camera sitting at the origin looking down -Y.
 """
 import bpy, math, os

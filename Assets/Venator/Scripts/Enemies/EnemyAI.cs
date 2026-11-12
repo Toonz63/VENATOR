@@ -62,7 +62,7 @@ public class EnemyAI : MonoBehaviour
     void Start()
     {
         home = transform.position;
-        var fpc = FindFirstObjectByType<FirstPersonController>();
+        var fpc = FindAnyObjectByType<FirstPersonController>();
         if (fpc != null) { player = fpc.transform; playerHealth = fpc.GetComponent<HealthSystem>(); }
 
         // The NavMesh is built at runtime in Awake (NavMeshBaker), so the agent starts disabled

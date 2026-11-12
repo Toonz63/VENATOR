@@ -16,7 +16,7 @@ Mark each one Pass or Fail. If something fails, write what happened. Real result
 | 7 | Ramp | Walk up the ramp onto the pier | Smooth, no snagging | Pass |
 | 8 | Damage | Press K | Vitality drops 10, red flash | Pass |
 | 9 | Tonic | After K, press H | Vitality +40%, Tonics 3 → 2 | Pass |
-| 10 | Death/respawn | Press K about 10 times | Defeat message → respawn at start with full Vitality and 3 Tonics | Pass | No deth screan
+| 10 | Death/respawn | Press K about 10 times | Defeat message → respawn at start with full Vitality and 3 Tonics | Pass |
 | 11 | Cursor | Esc, then click Game view | Cursor frees, then re-locks; the click does **not** fire | Pass |
 
 ## Week 02 – Weapons and Grims
@@ -35,4 +35,4 @@ Mark each one Pass or Fail. If something fails, write what happened. Real result
 | 21 | Stagger glow | Damage a Grim to below 25% | Turns gold | Pass |
 | 22 | Banish | Finish it | Banish animation, disappears, no longer blocks you | Pass |
 | 23 | Slide gate | Slide under the beam while chased | Grims can't follow | Pass |
-| 24 | Build | Run the Windows .exe | Same results as in the editor; F10 quits | |
+| 24 | Build | Run the Windows .exe | Same results as in the editor; F10 quits | Pass |

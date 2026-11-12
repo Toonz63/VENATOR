@@ -81,7 +81,7 @@ public class DebugHUD : MonoBehaviour
         if (showHelp)
         {
             GUI.Label(new Rect(w - 300, 16, 290, 210),
-                "WASD move   Mouse look\nShift sprint   Space jump\nShift + Ctrl slide (under gold beams)\n" +
+                "WASD move   Mouse look\nShift sprint   Space jump\nSprint, then tap Ctrl = slide (gold beams)\n" +
                 "LMB crossbow (hold)   R reload\nRMB whip lash (interrupts telegraphs)\nH tonic   K test damage\n" +
                 "Esc free cursor   F1 hide help   F10 quit", label);
         }
